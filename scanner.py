@@ -1,23 +1,29 @@
 import socket
+import colorama
+from colorama import Fore, Style
 
-def scan(target, ports):
-    """
-    Scans a given target IP for open ports.
+colorama.init()  # Initialize color support for Windows
 
-    :param target: The IP address to scan.
-    :param ports: A list of ports to check.
-    """
-    print(f"Scanning {target} for open ports...\n")
-    for port in ports:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Creating a socket
-        s.settimeout(1)  # Setting timeout for connection
-        result = s.connect_ex((target, port))  # Trying to connect
+def scan_ports(target):
+    print(Fore.CYAN + f"\nScanning {target} for open ports...\n" + Style.RESET_ALL)
+    
+    for port in range(1, 65536):  # Scanning all ports
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.5)  # Shorter timeout for faster scanning
+            result = s.connect_ex((target, port))
+            
+            if result == 0:
+                print(Fore.GREEN + f"[+] Port {port} is OPEN" + Style.RESET_ALL)
+            
+            s.close()
+        except KeyboardInterrupt:
+            print(Fore.RED + "\nScan interrupted by user. Exiting..." + Style.RESET_ALL)
+            break
+        except socket.error:
+            print(Fore.RED + "Could not connect to target." + Style.RESET_ALL)
+            break
 
-        if result == 0:
-            print(f"[+] Port {port} is OPEN")  # If the port is open, print it
-        s.close()
-
-if __name__ == "__main__":
-    target_ip = input("Enter target IP: ")  # User enters an IP address
-    common_ports = [21, 22, 23, 25, 53, 80, 443, 8080]  # List of common ports
-    scan(target_ip, common_ports)  # Call the scan function
+# Get target from user
+target_ip = input("Enter target IP or domain: ")
+scan_ports(target_ip)
